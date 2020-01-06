@@ -1,10 +1,13 @@
 FROM bucharestgold/centos7-s2i-nodejs:10.x
 
-WORKDIR /opt/app-root/src
+COPY package*.json ./
+
+RUN npm install
 
 EXPOSE 8080
 
-COPY . /opt/app-root/src
+#COPY . /opt/app-root/src
+COPY . .
 
 
 # Variables that define default values for the OpenShift Project
@@ -12,8 +15,8 @@ COPY . /opt/app-root/src
 # values are used to build up the service URLs that are used for
 # the services at runtime. These can also be overridden by injecting
 # environment variables into the container at runtime.
-ENV OS_SUBDOMAIN='rhel-cdk.10.1.2.2.xip.io' \
-    OS_PROJECT='helloworld-msa'
+ENV OS_SUBDOMAIN='apps.ocp.cloud.vssi.com' \
+    OS_PROJECT='jenkins-poc'
 
 # These variables can be used to enable/disable SSO/HYSTRIX dashboards
 ENV ENABLE_HYSTRIX false
