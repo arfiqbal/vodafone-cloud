@@ -18,7 +18,7 @@
   "homepage": "https://github.com/redhat-helloworld-msa/frontend#readme",
   "dependencies": {
     "express": "^4.13.4",
-    "keycloak-js": "^2.4.0",
+    "keycloak-js": "^3.1.0",
     "mustache": "^2.3.0",
     "mustache-express": "^1.2.4"
   }
