@@ -1,0 +1,181 @@
+def getBuildUser() {
+    return currentBuild.rawBuild.getCause(Cause.UserIdCause).getUserId()
+}
+pipeline {
+
+    agent any
+    environment {
+        BUILD_USER = ''
+        scannerHome = tool 'sonarqubeScanner'
+    }           
+    
+    options {
+        // set a timeout of 20 minutes for this pipeline
+        timeout(time: 20, unit: 'MINUTES')
+    }
+
+    stages {
+        
+        stage('Slack Notify') {
+            steps {
+                // script{
+                //   // BUILD_USER = getBuildUser()
+                // } 
+                          
+    			slackSend channel: '#cicd',
+    			color: 'good',
+    			message: "*${currentBuild.currentResult}:* Job ${env.JOB_NAME} build ${env.BUILD_NUMBER} \n More info at: ${env.BUILD_URL}"
+            }
+        }//stage
+        
+        stage('Parallel Jobs') {
+          parallel {
+                    stage('SCM Checkout') {
+                        steps {
+                            script {
+    							git branch: 'master', credentialsId: 'jenkins-poc-gogs', url: 'http://gogs-jenkins-poc.apps.ocp.cloud.vssi.com/arif/node-app.git'
+    							
+    							sh "ls -lrth"
+    						}
+                        }
+                    }
+                    
+                     stage('Static Code Analysis') {
+                        steps{
+                            script{
+                                withSonarQubeEnv(credentialsId: 'newsonar') {
+                                    sh "${scannerHome}/bin/sonar-scanner"
+                                }
+                            }
+                        }
+                     }
+                     
+                     
+                    
+                }//par
+            }
+        
+        stage('Openshift Project') {
+            steps {
+                script {
+                    openshift.withCluster() {
+                        openshift.withProject('jenkins-poc') {
+                            def saSelector = openshift.selector( 'serviceaccount' )
+                            def sa = "serviceaccount/jenkin-sa"
+                            //saSelector.describe()
+                            saSelector.withEach { 
+                              echo "${it.name()}"
+                                if("${it.name()}" == "${sa}"){
+                                  echo "good job"
+                                }
+                            }//each
+                        }//project
+                    }//cluster
+                }
+            }
+            
+        }//stage
+        
+        stage('Automation Test') {
+          parallel {
+    			
+                    stage('Performance Test') {
+                        steps {
+                            script {
+    							echo "test"
+    						}
+                        }
+                    }
+                    
+                     stage('Unit Test') {
+                        steps{
+                            script{
+                                echo "Testing"
+                            }
+                        }
+                     }
+                     
+                     stage('Security Vulnerability Scan') {
+                        steps{
+                            script{
+                                echo "Testing"
+                            }
+                        }
+                     }
+                    
+                }//par
+            }
+         
+        stage('Image Build ') {
+            steps {
+                script {
+            
+                    sh "docker pull docker.io/arfiqbal/node-app:v1"
+                }
+            }
+        }//stage
+        
+        stage('Image Tagged ') {
+            steps {
+                script {
+            
+                    echo "tagged"
+                }
+            }
+        }//stage
+        
+         stage('Image Scan Aqua Micro scanner') {
+            steps {
+                script {
+            
+                    echo "tagged"
+                }
+            }
+        }//stage
+        
+        
+        stage('Deloy to Staging') {
+            steps {
+                script {
+                    openshift.withCluster() {
+                        openshift.withProject('jenkins-poc') {
+                          sh "oc new-app --name=test --docker-image=docker.io/arfiqbal/node-app:v1 --insecure-registry"
+                          
+                          sh "sleep 10"
+                          
+                          sh " oc expose svc test"
+                          
+                        }
+                    }
+                }
+            }
+        }//stage
+        
+        stage('Load Testing') {
+            steps {
+               sh " for ((i=1;i<=1000;i++)); do   curl 'test-jenkins-poc.apps.ocp.cloud.vssi.com'; done"
+            }
+        }//stage
+        
+         stage('Confirm Approval') {
+          input {
+              message 'Do you want to approve the deploy in production?'
+              ok 'Yes'
+              id "simple-input"
+          }
+          steps {
+              echo 'Deploying'
+          }
+                 
+        }//stage
+        
+         stage('Deploy to Prod') {
+            steps {
+               echo "Check"
+            }
+        }//stage
+
+        
+        
+    } // stages
+} // pipeline
