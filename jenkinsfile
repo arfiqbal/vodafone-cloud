@@ -127,8 +127,8 @@ pipeline {
          stage('Image Scan Aqua Micro scanner') {
             steps {
                 script {
-            
-                    echo "tagged"
+        
+                    aquaMicroscanner imageName: 'docker.io/arfiqbal/node-app:v1', notCompliesCmd: '', onDisallowed: 'ignore', outputFormat: 'html'
                 }
             }
         }//stage
