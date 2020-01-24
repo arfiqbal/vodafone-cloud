@@ -1,4 +1,4 @@
-FROM bucharestgold/centos7-s2i-nodejs:10.x
+FROM node:8
 
 COPY package*.json ./
 
