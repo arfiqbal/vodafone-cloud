@@ -15,7 +15,7 @@ COPY . .
 # values are used to build up the service URLs that are used for
 # the services at runtime. These can also be overridden by injecting
 # environment variables into the container at runtime.
-ENV OS_SUBDOMAIN='apps.ocp.cloud.vssi.com' \
+ENV OS_SUBDOMAIN='' \
     OS_PROJECT='jenkins-poc'
 
 # These variables can be used to enable/disable SSO/HYSTRIX dashboards
